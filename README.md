@@ -21,7 +21,7 @@ flutter pub add live_file_publisher
 import 'package:live_file_publisher/live_file_publisher.dart';
 
 // Initialise
-LiveFilePublisher filePublisher = LiveFilePublisher(mode: PublisherProtocol.RTSP_UDP, baseUrl: 'rtsp://<url>');
+LiveFilePublisher filePublisher = LiveFilePublisher();
 
 
 // Event callback
@@ -47,6 +47,8 @@ void onLogListener(String log) {
 
 .
 .
+// Connect
+filePublisher.connect(url: 'rtsp://localhost', mode: PublisherProtocol.RTSP_UDP);
 // Publish 
 filePublisher.publish(startTime: '00:00:00',filePath: <filepath>,name: 'mystream');
 
