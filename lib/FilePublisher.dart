@@ -16,6 +16,7 @@ enum PublishingState {
 }
 
 abstract class FilePublisherBase {
+  void connect({required String url, required PublisherProtocol mode});
   void publish(
       {required String filePath, required String name, String? startTime});
   void stop();
@@ -25,9 +26,10 @@ abstract class FilePublisherBase {
 }
 
 class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
-  LiveFilePublisher({required this.mode, required this.baseUrl});
-  final PublisherProtocol mode;
-  final String baseUrl;
+  LiveFilePublisher();
+
+  PublisherProtocol mode = PublisherProtocol.RTMP;
+  String? baseUrl;
   String? _name;
   String? _filePath;
   String? _startTime;
@@ -83,9 +85,18 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
   @override
   void publish(
       {required String filePath, required String name, String? startTime}) {
+    if (filePath == '') {
+      throw Exception('File path is empty');
+    }
+    if (name == '') {
+      throw Exception('Stream name is empty');
+    }
     _filePath = filePath;
     _name = name;
     _startTime = startTime;
+    if (baseUrl == null || baseUrl == '') {
+      throw Exception('Please call connect method to set the url');
+    }
     publishingState = PublishingState.RequestPublish;
   }
 
@@ -150,5 +161,21 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
   @override
   void addLogListener(Function(String log)? logListener) {
     _logListener = logListener;
+  }
+
+  @override
+  void connect({required String url, required PublisherProtocol mode}) {
+    /** Check if url is empty */
+    if (url == '') throw Exception('url is empty');
+    /**  Check if url has right scheme */
+    if (mode == PublisherProtocol.RTMP && !url.contains('rtmp://')) {
+      throw Exception('Invalid url. Please use rtmp://');
+    } else if ((mode == PublisherProtocol.RTSP_TCP ||
+            mode == PublisherProtocol.RTSP_UDP) &&
+        !url.contains('rtsp://')) {
+      throw Exception('Invalid url. Please use rtsp://');
+    }
+    baseUrl = url;
+    this.mode = mode;
   }
 }
