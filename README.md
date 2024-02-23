@@ -1,6 +1,6 @@
 # Introduction
 
-live_file_publisher is a Flutter package that enables you to seamlessly publish live video streams to RTSP or RTMP servers within your Flutter applications.
+live_file_publisher is a Flutter package that enables you to seamlessly publish your video file to RTSP or RTMP servers within your Flutter applications.
 
 ## Features
 
