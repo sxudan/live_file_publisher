@@ -75,6 +75,7 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
 
   void setError(String msg) {
     _errorListener?.call({'message': msg});
+    publishingState = PublishingState.Normal;
   }
 
   @override
