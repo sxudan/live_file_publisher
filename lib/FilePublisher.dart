@@ -75,7 +75,7 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
 
   void setError(String msg) {
     _errorListener?.call({'message': msg});
-    publishingState = PublishingState.Normal;
+    publishingState = PublishingState.RequestStopPublish;
   }
 
   @override
@@ -150,7 +150,9 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
   }
 
   Future<void> _cancelIngest() async {
-    await FFmpegKit.cancel();
+    try {
+      await FFmpegKit.cancel();
+    } catch (e) {}
     publishingState = PublishingState.Normal;
   }
 
