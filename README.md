@@ -74,5 +74,9 @@ enum PublishingState {
 }
 ```
 
+### Example
+
+Please check the usage of this package in this example project https://github.com/sxudan/lets-watch
+
 ### License
 This project is licensed under the MIT License - see the LICENSE file for details.
