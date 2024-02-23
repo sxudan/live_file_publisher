@@ -21,7 +21,7 @@ flutter pub add live_file_publisher
 import 'package:live_file_publisher/live_file_publisher.dart';
 
 // Initialise
-LiveFilePublisher filePublisher = LiveFilePublisher(mode: PublisherProtocol.RTSP_UDP, baseUrl: Environment.baseRtspUrl);
+LiveFilePublisher filePublisher = LiveFilePublisher(mode: PublisherProtocol.RTSP_UDP, baseUrl: 'rtsp://<url>');
 
 
 // Event callback
