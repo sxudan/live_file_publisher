@@ -1,6 +1,6 @@
 name: live_file_publisher
 description: "Publish live video streams to RTSP or RTMP servers."
-version: 0.0.5
+version: 0.1.0
 homepage: "https://github.com/sxudan/live_file_publisher"
 repository: "https://github.com/sxudan/live_file_publisher"
 
