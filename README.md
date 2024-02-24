@@ -76,6 +76,10 @@ enum PublishingState {
 }
 ```
 
+### Known issues
+
+There are some issues publishing iphone video which are in HEVC format. They need to be transcoded using iOS UIImagePicker compression or other compression techniques. Before publishing to the server, you need to shrink resolution to streaming video resolution (1280x720). By default, the package `image_picker` does it for you.
+
 ### Example
 
 Please check the usage of this package in this example project https://github.com/sxudan/lets-watch
