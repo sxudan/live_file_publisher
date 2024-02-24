@@ -33,13 +33,12 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
   String? _name;
   String? _filePath;
   String? _startTime;
-
   PublishingState _publishingState = PublishingState.Normal;
   PublishingState get publishingState => _publishingState;
-
   Function(PublishingState)? _listener;
   Function(Object error)? _errorListener;
   Function(String log)? _logListener;
+  int? _currentSessionId;
 
   set publishingState(PublishingState state) {
     _publishingState = state;
@@ -47,15 +46,18 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
     switch (state) {
       case PublishingState.RequestPublish:
         if (_filePath == null || _filePath == '') {
-          setError('File path is null');
+          _setError('File path is null');
           return;
         }
         if (_name == null) {
-          setError('Stream name is null');
+          _setError('Stream name is null');
           return;
         }
         _ingest(
             offsetStartTime: _startTime,
+            onLog: (log) {
+              _logListener?.call(log);
+            },
             onStats: (stats) {
               if (_publishingState == PublishingState.RequestPublish) {
                 publishingState = PublishingState.Publishing;
@@ -67,17 +69,19 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
       case PublishingState.RequestStopPublish:
         _cancelIngest();
         break;
-      default:
+      case PublishingState.Normal:
+        _currentSessionId = null;
         break;
     }
     notifyListeners();
   }
 
-  void setError(String msg) {
+  void _setError(String msg) {
     _errorListener?.call({'message': msg});
     publishingState = PublishingState.RequestStopPublish;
   }
 
+  /// add publishing state listener
   @override
   void addStateListener(Function(PublishingState state)? listener) {
     _listener = listener;
@@ -101,6 +105,7 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
     publishingState = PublishingState.RequestPublish;
   }
 
+  /// stops the file ingestion
   @override
   void stop() {
     publishingState = PublishingState.RequestStopPublish;
@@ -122,24 +127,27 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
     } else {
       cmd += '-f rtsp -rtsp_transport tcp ${baseUrl}/${_name}';
     }
-    _logListener?.call(cmd);
+    onLog?.call(cmd);
     try {
       FFmpegKitConfig.setLogLevel(Level.avLogVerbose);
       FFmpegKit.executeAsync(
         cmd,
         // '-f h264 -thread_queue_size 4096 -vsync drop -i ${inputPath} -f h264 -ar 44100 -ac 2 -acodec pcm_s16le -thread_queue_size 4096 -i ${inputPath} -vcodec copy -acodec aac -ab 128k -f fifo -fifo_format flv -map 0:v -map 1:a -drop_pkts_on_overflow 1 -attempt_recovery 1 -recovery_wait_time 1 rtmp://192.168.1.100:1935/mystream',
         (c) async {
-          _logListener?.call(await c.getOutput() ?? '');
+          publishingState = PublishingState.Normal;
+          onLog?.call("Completed");
           var returnCode = await c.getReturnCode();
-          if (returnCode == ReturnCode.cancel) {
-            setError(await c.getOutput() ?? '');
+          if (returnCode != ReturnCode.cancel &&
+              returnCode != ReturnCode.success) {
+            _setError(await c.getOutput() ?? '');
           }
         },
         (log) {
-          _logListener?.call(log.getMessage());
+          onLog?.call(log.getMessage());
           // print(log.getMessage());
         },
         (stats) {
+          _currentSessionId = stats.getSessionId();
           onStats?.call(stats);
         },
       );
@@ -151,21 +159,28 @@ class LiveFilePublisher extends ChangeNotifier implements FilePublisherBase {
 
   Future<void> _cancelIngest() async {
     try {
-      await FFmpegKit.cancel();
+      if (_currentSessionId != null) {
+        await FFmpegKit.cancel(_currentSessionId);
+      } else {
+        await FFmpegKit.cancel();
+      }
     } catch (e) {}
     publishingState = PublishingState.Normal;
   }
 
+  /// add error listener
   @override
   void addErrorListener(Function(Object error)? errorListener) {
     _errorListener = errorListener;
   }
 
+  /// add log lister
   @override
   void addLogListener(Function(String log)? logListener) {
     _logListener = logListener;
   }
 
+  /// set the url and mode
   @override
   void connect({required String url, required PublisherProtocol mode}) {
     /** Check if url is empty */
